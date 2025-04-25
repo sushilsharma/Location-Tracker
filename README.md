@@ -39,7 +39,7 @@ This app is a real-time location tracking application built with **Ionic Framewo
   - `@capacitor/geolocation`
   - `@capacitor/background-task`
   - `@capacitor/local-notifications`
-  - `cordova-plugin-background-geolocation` (if using advanced native tracking)
+  - `cordova-plugin-background-geolocation`
 
 ---
 
