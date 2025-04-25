@@ -1,0 +1,77 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-menu-button></ion-menu-button>
+    </ion-buttons>
+    <ion-title>Location History</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div *ngIf="!locationHistory || locationHistory.length === 0" class="ion-padding ion-text-center">
+    <ion-icon name="map" style="font-size: 64px; color: var(--ion-color-medium)"></ion-icon>
+    <p>No location history available yet.</p>
+    <p>Turn on location tracking in Settings to start recording your movements.</p>
+  </div>
+  
+  <div *ngIf="locationHistory && locationHistory.length > 0">
+    <!-- Map container -->
+    <div id="map" style="width: 100%; height: 50vh;"></div>
+    
+    <!-- Stats summary -->
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>Trip Summary</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <ion-grid>
+          <ion-row>
+            <ion-col size="6">
+              <div class="stat-container">
+                <div class="stat-label">Distance</div>
+                <div class="stat-value">{{ (locationStats.totalDistance / 1000) | number:'1.2-2' }} km</div>
+              </div>
+            </ion-col>
+            <ion-col size="6">
+              <div class="stat-container">
+                <div class="stat-label">Duration</div>
+                <div class="stat-value">{{ formatDuration(locationStats.totalTime) }}</div>
+              </div>
+            </ion-col>
+          </ion-row>
+          <ion-row *ngIf="locationStats.startTime && locationStats.endTime">
+            <ion-col size="6">
+              <div class="stat-container">
+                <div class="stat-label">Start Time</div>
+                <div class="stat-value small">{{ formatTime(locationStats.startTime) }}</div>
+              </div>
+            </ion-col>
+            <ion-col size="6">
+              <div class="stat-container">
+                <div class="stat-label">End Time</div>
+                <div class="stat-value small">{{ formatTime(locationStats.endTime) }}</div>
+              </div>
+            </ion-col>
+          </ion-row>
+        </ion-grid>
+      </ion-card-content>
+    </ion-card>
+    
+    <!-- Location list -->
+    <ion-list>
+      <ion-list-header>
+        <ion-label>Recent Locations</ion-label>
+      </ion-list-header>
+      
+      <ion-item *ngFor="let location of locationHistory.slice().reverse() | slice:0:10">
+        <ion-icon name="location" slot="start" color="primary"></ion-icon>
+        <ion-label>
+          <h2>{{ formatTime(location.timestamp) }}</h2>
+          <p>Lat: {{ location.latitude | number:'1.6-6' }}, Lng: {{ location.longitude | number:'1.6-6' }}</p>
+          <p *ngIf="location.speed !== undefined">Speed: {{ location.speed | number:'1.1-1' }} m/s</p>
+          <p *ngIf="location.activityType">Activity: {{ location.activityType }}</p>
+        </ion-label>
+      </ion-item>
+    </ion-list>
+  </div>
+</ion-content>

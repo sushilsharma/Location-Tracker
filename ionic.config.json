@@ -1,0 +1,7 @@
+{
+  "name": "LocationTrack",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular"
+}

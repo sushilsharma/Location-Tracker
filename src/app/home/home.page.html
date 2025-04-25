@@ -1,0 +1,89 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-menu-button></ion-menu-button>
+    </ion-buttons>
+    <ion-title>
+      Location Tracker
+    </ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <div class="map-container">
+    <div id="current-map" style="width: 100%; height: 40vh;"></div>
+    <div class="map-overlay" *ngIf="currentLocation">
+      <div class="coordinates">
+        <div>Lat: {{ currentLocation.latitude | number:'1.6-6' }}</div>
+        <div>Lng: {{ currentLocation.longitude | number:'1.6-6' }}</div>
+        <div *ngIf="currentLocation.accuracy">Accuracy: {{ currentLocation.accuracy | number:'1.1-1' }}m</div>
+      </div>
+    </div>
+    
+    <div class="location-services-warning" *ngIf="locationServicesDisabled">
+      <ion-icon name="warning"></ion-icon>
+      <div class="warning-message">
+        <h3>Location Services Disabled</h3>
+        <p>Please enable location services in your device settings to use this app properly.</p>
+      </div>
+    </div>
+  </div>
+  
+  <ion-card>
+    <ion-card-header>
+      <ion-card-title>Tracking Status</ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <div class="status-container">
+        <div class="status-icon" [ngClass]="{'active': isTracking}">
+          <ion-icon name="locate"></ion-icon>
+        </div>
+        <div class="status-label">
+          {{ isTracking ? 'Tracking Enabled' : 'Tracking Disabled' }}
+        </div>
+        <div class="status-details" *ngIf="isTracking">
+          {{ isBackgroundTracking ? 'Background mode active' : 'Foreground tracking' }}
+        </div>
+      </div>
+      
+      <ion-button expand="block" [color]="isTracking ? 'danger' : 'success'" (click)="toggleTracking()">
+        <ion-icon slot="start" [name]="isTracking ? 'stop-circle' : 'play'"></ion-icon>
+        {{ isTracking ? 'Stop Tracking' : 'Start Tracking' }}
+      </ion-button>
+      
+      <ion-button expand="block" color="primary" routerLink="/settings">
+        <ion-icon slot="start" name="settings"></ion-icon>
+        Settings
+      </ion-button>
+      
+      <ion-button expand="block" color="tertiary" routerLink="/history" [disabled]="!(locationHistory && locationHistory.length > 0)">
+        <ion-icon slot="start" name="map"></ion-icon>
+        View History ({{ locationHistory.length }} points)
+      </ion-button>
+    </ion-card-content>
+  </ion-card>
+  
+  <ion-card *ngIf="locationStats.totalDistance > 0">
+    <ion-card-header>
+      <ion-card-title>Current Session</ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <ion-grid>
+        <ion-row>
+          <ion-col size="6">
+            <div class="stat-container">
+              <div class="stat-label">Distance</div>
+              <div class="stat-value">{{ (locationStats.totalDistance / 1000) | number:'1.2-2' }} km</div>
+            </div>
+          </ion-col>
+          <ion-col size="6">
+            <div class="stat-container">
+              <div class="stat-label">Duration</div>
+              <div class="stat-value">{{ formatDuration(locationStats.totalTime) }}</div>
+            </div>
+          </ion-col>
+        </ion-row>
+      </ion-grid>
+    </ion-card-content>
+  </ion-card>
+</ion-content>
