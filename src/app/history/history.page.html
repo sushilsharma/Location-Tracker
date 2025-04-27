@@ -64,12 +64,17 @@
       </ion-list-header>
       
       <ion-item *ngFor="let location of locationHistory.slice().reverse() | slice:0:10">
-        <ion-icon name="location" slot="start" color="primary"></ion-icon>
+        <ion-icon [name]="location.isBackgroundLocation ? 'phone-portrait' : 'location'" 
+                slot="start" 
+                [color]="location.isBackgroundLocation ? 'medium' : 'primary'"></ion-icon>
         <ion-label>
           <h2>{{ formatTime(location.timestamp) }}</h2>
           <p>Lat: {{ location.latitude | number:'1.6-6' }}, Lng: {{ location.longitude | number:'1.6-6' }}</p>
           <p *ngIf="location.speed !== undefined">Speed: {{ location.speed | number:'1.1-1' }} m/s</p>
           <p *ngIf="location.activityType">Activity: {{ location.activityType }}</p>
+          <p *ngIf="location.isBackgroundLocation" class="background-indicator">
+            <ion-icon name="moon" size="small"></ion-icon> Background location
+          </p>
         </ion-label>
       </ion-item>
     </ion-list>

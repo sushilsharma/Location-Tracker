@@ -22,6 +22,7 @@ export interface LocationData {
   speed?: number;
   altitude?: number;
   activityType?: string;
+  isBackgroundLocation?: boolean;  // Added to track if location was obtained in background
 }
 
 export interface LocationSettings {
@@ -80,15 +81,18 @@ export class LocationService {
     this.loadLocationHistory();
     
     // Monitor app state to handle transitions between foreground and background
-    App.addListener('appStateChange', ({ isActive }) => {
+    App.addListener('appStateChange', async ({ isActive }) => {
       const settings = this.settingsSubject.getValue();
       
       if (settings.isTrackingEnabled) {
         if (isActive) {
           // App came to foreground
           if (this.isBackgroundTracking) {
-            this.stopBackgroundTracking();
-            this.startForegroundTracking();
+            // Start foreground tracking first, then stop background
+            const started = await this.startForegroundTracking();
+            if (started) {
+              await this.stopBackgroundTracking();
+            }
           }
           
           // Check location services when app comes to foreground
@@ -96,8 +100,11 @@ export class LocationService {
         } else {
           // App went to background
           if (settings.isBackgroundTrackingEnabled && this.isTracking) {
-            this.stopForegroundTracking();
-            this.startBackgroundTracking();
+            // Start background tracking first, then stop foreground
+            const started = await this.startBackgroundTracking();
+            if (started) {
+              await this.stopForegroundTracking();
+            }
           }
         }
       }
@@ -339,12 +346,13 @@ export class LocationService {
       const settings = this.settingsSubject.getValue();
       
       const watcher = await BackgroundGeolocation.addWatcher({
-          // Required background settings with only supported options
+          // Enhanced background settings
           backgroundMessage: "Location tracking is active",
           backgroundTitle: "Location Tracking Active",
           requestPermissions: true,
           stale: false,
-          distanceFilter: settings.radius || 10
+          // The distance filter determines the minimum distance in meters that the device needs to move before an update event is triggered
+          distanceFilter: Math.max(settings.radius, 10)
       },
       (location, error) => {
           if (error) {
@@ -366,7 +374,7 @@ export class LocationService {
                   timestamp: location.time || Date.now(),
                   speed: location.speed || 0,
                   altitude: location.altitude || undefined,
-                  activityType: undefined // Removed simpleActivity as it's not available
+                  isBackgroundLocation: true // Mark as background location
               };
               
               this.addLocationToHistory(locationData);
@@ -429,7 +437,8 @@ export class LocationService {
       accuracy: position.coords.accuracy,
       timestamp: position.timestamp,
       speed: position.coords.speed || 0,
-      altitude: position.coords.altitude || undefined
+      altitude: position.coords.altitude || undefined,
+      isBackgroundLocation: !this.isTracking // If not in foreground tracking mode, it's a background location
     };
   }
 

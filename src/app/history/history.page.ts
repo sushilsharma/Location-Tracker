@@ -145,10 +145,12 @@ export class HistoryPage implements OnInit, OnDestroy, AfterViewInit {
       return;
     }
     
+    const map = this.map; // Create local reference to avoid null checks
+    
     // Clear existing map layers
-    this.map.eachLayer(layer => {
+    map.eachLayer(layer => {
       if (layer instanceof L.TileLayer === false) {
-        this.map?.removeLayer(layer);
+        map.removeLayer(layer);
       }
     });
     
@@ -159,41 +161,40 @@ export class HistoryPage implements OnInit, OnDestroy, AfterViewInit {
     const polyline = L.polyline(points, {
       color: '#2979FF',
       weight: 3
-    }).addTo(this.map);
+    }).addTo(map);
     
-    // Add markers for start and end points
-    if (this.locationHistory.length > 0) {
-      const startLocation = this.locationHistory[0];
-      const endLocation = this.locationHistory[this.locationHistory.length - 1];
+    // Add markers for each point
+    this.locationHistory.forEach((loc, index) => {
+      const isFirst = index === 0;
+      const isLast = index === this.locationHistory.length - 1;
       
-      // Start marker with custom icon
-      const startIcon = L.divIcon({
-        className: 'custom-div-icon',
-        html: '<div style="background-color:#4CAF50;width:16px;height:16px;border-radius:50%;border:2px solid white;"></div>',
+      let markerColor = '#2979FF'; // Default blue
+      if (isFirst) markerColor = '#4CAF50'; // Green for start
+      if (isLast) markerColor = '#F44336'; // Red for end
+      
+      const markerIcon = L.divIcon({
+        className: `custom-div-icon ${loc.isBackgroundLocation ? 'background-location-marker' : ''}`,
+        html: `<div style="background-color:${markerColor};width:16px;height:16px;border-radius:50%;border:2px solid white;"></div>`,
         iconSize: [16, 16],
         iconAnchor: [8, 8]
       });
-      
-      L.marker([startLocation.latitude, startLocation.longitude], {
-        icon: startIcon,
-        title: 'Start'
-      }).addTo(this.map);
-      
-      // End marker with custom icon
-      const endIcon = L.divIcon({
-        className: 'custom-div-icon',
-        html: '<div style="background-color:#F44336;width:16px;height:16px;border-radius:50%;border:2px solid white;"></div>',
-        iconSize: [16, 16],
-        iconAnchor: [8, 8]
-      });
-      
-      L.marker([endLocation.latitude, endLocation.longitude], {
-        icon: endIcon,
-        title: 'Current'
-      }).addTo(this.map);
-      
-      // Fit the map to the bounds of the path
-      this.map.fitBounds(polyline.getBounds());
-    }
+
+      const marker = L.marker([loc.latitude, loc.longitude], {
+        icon: markerIcon,
+        title: isFirst ? 'Start' : isLast ? 'End' : this.formatTime(loc.timestamp)
+      }).addTo(map);
+
+      // Add popup with location details
+      const popupContent = `
+        <strong>${this.formatTime(loc.timestamp)}</strong><br>
+        Lat: ${loc.latitude.toFixed(6)}<br>
+        Lng: ${loc.longitude.toFixed(6)}
+        ${loc.isBackgroundLocation ? '<br><em>Background location</em>' : ''}
+      `;
+      marker.bindPopup(popupContent);
+    });
+    
+    // Fit the map to the bounds of the path
+    map.fitBounds(polyline.getBounds());
   }
 }

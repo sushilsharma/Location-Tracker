@@ -7,65 +7,63 @@ import { Platform } from '@ionic/angular';
 })
 export class NotificationService {
   private TRACKING_NOTIFICATION_ID = 999;
-
+  
   constructor(private platform: Platform) {}
 
   async showNotification(title: string, body: string): Promise<void> {
     try {
-      // Check if we have permission
-      const permResult = await LocalNotifications.checkPermissions();
-      
-      if (permResult.display !== 'granted') {
-        const request = await LocalNotifications.requestPermissions();
-        if (request.display !== 'granted') {
-          console.log('Notification permission not granted');
-          return;
-        }
+      if (!this.platform.is('capacitor')) {
+        return; // Only show notifications on real devices
       }
-      
-      // Show notification
+
       await LocalNotifications.schedule({
-        notifications: [
-          {
-            title,
-            body,
-            id: Math.floor(Math.random() * 100),
-            schedule: { at: new Date(Date.now()) },
-            sound: undefined,
-            attachments: undefined,
-            actionTypeId: '',
-            extra: null
-          }
-        ]
+        notifications: [{
+          title,
+          body,
+          id: Math.floor(Math.random() * 100),
+          schedule: { at: new Date(Date.now()) }
+        }]
       });
     } catch (error) {
       console.error('Error showing notification:', error);
     }
   }
 
-  // New method for persistent tracking notification
   async showTrackingNotification(isTracking: boolean): Promise<void> {
     try {
       if (!this.platform.is('capacitor')) {
         return; // Only show notifications on real devices
       }
-      
+
       if (isTracking) {
-        // Show persistent notification for tracking
+        // First ensure we have the right notification channel on Android
+        if (this.platform.is('android')) {
+          try {
+            await LocalNotifications.createChannel({
+              id: 'location-tracking',
+              name: 'Location Tracking',
+              description: 'Used for background location tracking notifications',
+              importance: 4,
+              visibility: 1,
+              vibration: false,
+              lights: false
+            });
+          } catch (channelError) {
+            console.warn('Could not create notification channel:', channelError);
+          }
+        }
+
+        // Schedule the persistent notification
         await LocalNotifications.schedule({
-          notifications: [
-            {
-              title: 'Location Tracking Active',
-              body: 'Your location is being tracked in the background',
-              id: this.TRACKING_NOTIFICATION_ID,
-              ongoing: true, // Makes the notification persistent
-              autoCancel: false,
-              sound: undefined,
-              attachments: undefined,
-              actionTypeId: '',
-              extra: { tracking: 'active' }
-            }
-          ]
+          notifications: [{
+            title: 'Location Tracking Active',
+            body: 'Your location is being tracked in the background',
+            id: this.TRACKING_NOTIFICATION_ID,
+            channelId: this.platform.is('android') ? 'location-tracking' : undefined,
+            ongoing: true,
+            autoCancel: false,
+            schedule: { at: new Date(Date.now()) }
+          }]
         });
       } else {
         // Cancel the tracking notification
