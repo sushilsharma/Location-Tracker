@@ -1,0 +1,13 @@
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Location is required for tracking your movements</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Location is required for background tracking</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>Location is required for background tracking</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+		<string>fetch</string>
+		<string>processing</string>
+	</array>
+	<!-- ... rest of Info.plist content ... -->

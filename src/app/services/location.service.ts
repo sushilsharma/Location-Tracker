@@ -338,45 +338,40 @@ export class LocationService {
     try {
       const settings = this.settingsSubject.getValue();
       
-      // Set up the events listener with only supported options
-      const watcher = await BackgroundGeolocation.addWatcher(
-        {
+      const watcher = await BackgroundGeolocation.addWatcher({
+          // Required background settings with only supported options
           backgroundMessage: "Location tracking is active",
-          backgroundTitle: "Location Tracker",
+          backgroundTitle: "Location Tracking Active",
           requestPermissions: true,
           stale: false,
-          distanceFilter: settings.radius,
-          // NOTE: To track after app kill, you may need a more specialized plugin
-          // The built-in BackgroundGeolocation plugin doesn't fully support tracking
-          // after app termination on all devices
-        },
-        (location: any, error: any) => {
+          distanceFilter: settings.radius || 10
+      },
+      (location, error) => {
           if (error) {
-            console.error('Background location error:', error);
-            if (error.code === 'NOT_AUTHORIZED') {
-              this.notificationService.showNotification(
-                'Permission Error',
-                'Location permission denied. Please enable in settings.'
-              );
-            }
-            return;
+              console.error('Background location error:', error);
+              if (error.code === 'NOT_AUTHORIZED') {
+                  this.notificationService.showNotification(
+                      'Permission Error',
+                      'Location permission denied. Please enable in settings.'
+                  );
+              }
+              return;
           }
           
           if (location) {
-            const locationData: LocationData = {
-              latitude: location.latitude,
-              longitude: location.longitude,
-              accuracy: location.accuracy,
-              timestamp: new Date(location.time).getTime(),
-              speed: location.speed || 0,
-              altitude: location.altitude || undefined,
-              activityType: location.simpleActivity
-            };
-            
-            this.addLocationToHistory(locationData);
+              const locationData: LocationData = {
+                  latitude: location.latitude,
+                  longitude: location.longitude,
+                  accuracy: location.accuracy || 0,
+                  timestamp: location.time || Date.now(),
+                  speed: location.speed || 0,
+                  altitude: location.altitude || undefined,
+                  activityType: undefined // Removed simpleActivity as it's not available
+              };
+              
+              this.addLocationToHistory(locationData);
           }
-        }
-      );
+      });
 
       this.backgroundWatchId = typeof watcher === 'string' ? watcher : '';
       this.isBackgroundTracking = true;
